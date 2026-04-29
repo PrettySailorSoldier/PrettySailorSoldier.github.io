@@ -1,319 +1,75 @@
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+#app{min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;background:linear-gradient(135deg,#2d1b69 0%,#6b2fa0 50%,#c2185b 100%);border-radius:12px;padding:2rem 1rem;position:relative;overflow:hidden}
+#bg-img{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;display:none}
+#setup,#running{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1rem}
+#running{display:none}
+#task-input{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-size:13px;padding:7px 12px;width:260px;text-align:center;font-family:'Space Mono',monospace;outline:none}
+#task-input::placeholder{color:rgba(255,255,255,0.35)}
+#task-input:focus{border-color:rgba(255,255,255,0.55)}
+.time-inputs{display:flex;align-items:center;gap:6px}
+.time-box{display:flex;flex-direction:column;align-items:center;gap:3px}
+.time-box label{font-size:9px;color:rgba(255,255,255,0.45);font-family:'Space Mono',monospace;letter-spacing:0.08em;text-transform:uppercase}
+.time-box input[type=number]{width:58px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-size:26px;font-family:'Space Mono',monospace;font-weight:700;padding:5px 4px;text-align:center;outline:none}
+.time-box input[type=number]::-webkit-inner-spin-button{opacity:0}
+.sep{font-size:26px;font-family:'Space Mono',monospace;font-weight:700;color:rgba(255,255,255,0.4);margin-top:12px}
+.bottom-row{display:flex;align-items:center;gap:10px}
+.btn{padding:9px 26px;border-radius:24px;border:none;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.04em}
+.btn-primary{background:rgba(255,255,255,0.92);color:#2d1b69}
+.btn-primary:hover{background:#fff;transform:scale(1.04)}
+.btn-secondary{background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.3)}
+.btn-secondary:hover{background:rgba(255,255,255,0.22)}
+.icon-btn{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
+.icon-btn:hover{background:rgba(255,255,255,0.2);color:#fff;border-color:rgba(255,255,255,0.6)}
+#display{font-family:'Space Mono',monospace;font-size:76px;font-weight:700;color:#fff;letter-spacing:-2px;line-height:1;text-shadow:0 2px 16px rgba(0,0,0,0.5)}
+#display.warning{color:#fbbf24}
+#display.done{color:#f87171;animation:pulse 0.8s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:1}to{opacity:0.5}}
+#task-label{font-family:'Space Mono',monospace;font-size:12px;color:rgba(255,255,255,0.65);text-align:center;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 8px rgba(0,0,0,0.4);display:none}
+#notif-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);flex-shrink:0}
+#notif-dot.on{background:#4ade80}
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0
-  }
-
-  #app {
-    min-height: 420px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1.3rem;
-    background: linear-gradient(135deg, #2d1b69 0%, #6b2fa0 50%, #c2185b 100%);
-    border-radius: 12px;
-    padding: 2.5rem 1rem;
-    transition: background 0.4s ease;
-    position: relative
-  }
-
-  #task-input {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 14px;
-    padding: 8px 14px;
-    width: 280px;
-    text-align: center;
-    font-family: 'Space Mono', monospace;
-    outline: none
-  }
-
-  #task-input::placeholder {
-    color: rgba(255, 255, 255, 0.4)
-  }
-
-  #task-input:focus {
-    border-color: rgba(255, 255, 255, 0.6)
-  }
-
-  .time-inputs {
-    display: flex;
-    align-items: center;
-    gap: 8px
-  }
-
-  .time-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px
-  }
-
-  .time-box label {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.5);
-    font-family: 'Space Mono', monospace;
-    letter-spacing: 0.08em;
-    text-transform: uppercase
-  }
-
-  .time-box input[type=number] {
-    width: 64px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 28px;
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    padding: 6px 4px;
-    text-align: center;
-    outline: none
-  }
-
-  .time-box input[type=number]:focus {
-    border-color: rgba(255, 255, 255, 0.6)
-  }
-
-  .time-box input[type=number]::-webkit-inner-spin-button {
-    opacity: 0
-  }
-
-  .sep {
-    font-size: 28px;
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.5);
-    margin-top: 14px
-  }
-
-  #display {
-    font-family: 'Space Mono', monospace;
-    font-size: 80px;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: -2px;
-    line-height: 1;
-    display: none;
-    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4)
-  }
-
-  #display.warning {
-    color: #fbbf24
-  }
-
-  #display.done {
-    color: #f87171;
-    animation: pulse 0.8s ease-in-out infinite alternate
-  }
-
-  @keyframes pulse {
-    from {
-      opacity: 1
-    }
-
-    to {
-      opacity: 0.5
-    }
-  }
-
-  #task-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.65);
-    display: none;
-    text-align: center;
-    max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4)
-  }
-
-  .btns {
-    display: flex;
-    gap: 10px
-  }
-
-  .btn {
-    padding: 10px 28px;
-    border-radius: 24px;
-    border: none;
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.04em
-  }
-
-  .btn-primary {
-    background: rgba(255, 255, 255, 0.92);
-    color: #2d1b69
-  }
-
-  .btn-primary:hover {
-    background: #fff;
-    transform: scale(1.04)
-  }
-
-  .btn-secondary {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.3)
-  }
-
-  .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.22)
-  }
-
-  #setup {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.2rem
-  }
-
-  #running {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.2rem
-  }
-
-  .tone-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    width: 280px
-  }
-
-  .section-label {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.5);
-    font-family: 'Space Mono', monospace;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    align-self: flex-start
-  }
-
-  .tone-row {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap
-  }
-
-  .tone-btn {
-    padding: 5px 13px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.7);
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s
-  }
-
-  .tone-btn:hover {
-    background: rgba(255, 255, 255, 0.18);
-    color: #fff
-  }
-
-  .tone-btn.selected {
-    background: rgba(255, 255, 255, 0.28);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.7)
-  }
-
-  .upload-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%
-  }
-
-  .upload-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 13px;
-    border-radius: 16px;
-    border: 1px dashed rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.6);
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s;
-    flex-shrink: 0
-  }
-
-  .upload-label:hover {
-    background: rgba(255, 255, 255, 0.14);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.6)
-  }
-
-  .upload-label input {
-    display: none
-  }
-
-  .upload-fname {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    min-width: 0
-  }
-
-  #notif-status {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
-    font-family: 'Space Mono', monospace;
-    text-align: center
-  }
-
-  #notif-status a {
-    color: rgba(255, 255, 255, 0.5);
-    cursor: pointer;
-    text-decoration: underline
-  }
-
-  .bg-presets {
-    display: flex;
-    gap: 6px
-  }
-
-  .bg-preset {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: border 0.2s;
-    flex-shrink: 0
-  }
-
-  .bg-preset:hover,
-  .bg-preset.selected {
-    border-color: #fff
-  }
+/* overlay */
+#overlay{position:absolute;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;padding-bottom:0;border-radius:12px;background:rgba(0,0,0,0.45)}
+#overlay.open{display:flex}
+#panel{background:#14112a;border-radius:12px 12px 0 0;width:100%;padding:1.2rem 1.4rem 1.4rem;display:flex;flex-direction:column;gap:1rem;max-height:85%;overflow-y:auto}
+.panel-header{display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase}
+.close-btn{background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer;line-height:1;padding:0}
+.close-btn:hover{color:#fff}
+.p-section{display:flex;flex-direction:column;gap:8px}
+.p-label{font-size:9px;color:rgba(255,255,255,0.4);font-family:'Space Mono',monospace;letter-spacing:0.1em;text-transform:uppercase}
+.tab-row{display:flex;gap:5px}
+.tab-btn{padding:4px 11px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s}
+.tab-btn.active{background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.5)}
+.tab-content{display:none;flex-direction:column;gap:8px}
+.tab-content.active{display:flex}
+.grad-row{display:flex;align-items:center;gap:8px}
+.grad-row label{font-size:10px;color:rgba(255,255,255,0.5);font-family:'Space Mono',monospace;width:44px;flex-shrink:0}
+.grad-row input[type=color]{width:32px;height:26px;border-radius:5px;border:1px solid rgba(255,255,255,0.15);background:none;cursor:pointer;padding:2px;flex-shrink:0}
+.grad-row input[type=range]{flex:1;accent-color:#a78bfa}
+.grad-row span{font-size:10px;color:rgba(255,255,255,0.45);font-family:'Space Mono',monospace;width:30px;text-align:right}
+.grad-preview{height:24px;border-radius:6px;width:100%;border:1px solid rgba(255,255,255,0.1)}
+.apply-btn{padding:5px 14px;border-radius:12px;border:none;background:rgba(255,255,255,0.15);color:#fff;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;align-self:flex-start;transition:all 0.2s}
+.apply-btn:hover{background:rgba(255,255,255,0.28)}
+.upload-row{display:flex;align-items:center;gap:8px}
+.upload-label{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:12px;border:1px dashed rgba(255,255,255,0.3);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s;white-space:nowrap;flex-shrink:0}
+.upload-label:hover{background:rgba(255,255,255,0.12);color:#fff}
+.upload-label input{display:none}
+.upload-fname{font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.tone-row{display:flex;gap:5px;flex-wrap:wrap}
+.tone-btn{padding:4px 11px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s}
+.tone-btn:hover{background:rgba(255,255,255,0.15);color:#fff}
+.tone-btn.selected{background:rgba(255,255,255,0.22);color:#fff;border-color:rgba(255,255,255,0.55)}
 </style>
 
 <div id="app">
+  <div id="bg-img"></div>
+
   <div id="setup">
-    <input id="task-input" placeholder="what are you working on? (optional)" maxlength="60">
+    <input id="task-input" placeholder="what are you working on?" maxlength="60">
     <div class="time-inputs">
       <div class="time-box"><label>hr</label><input type="number" id="inp-h" value="0" min="0" max="23"></div>
       <div class="sep">:</div>
@@ -321,159 +77,192 @@
       <div class="sep">:</div>
       <div class="time-box"><label>sec</label><input type="number" id="inp-s" value="0" min="0" max="59"></div>
     </div>
-
-    <div class="tone-section">
-      <div class="section-label">background</div>
-      <div class="upload-row">
-        <div class="bg-presets" id="bg-presets"></div>
-        <label class="upload-label" style="margin-left:4px">
-          ＋ image
-          <input type="file" id="bg-file" accept="image/*">
-        </label>
-        <span class="upload-fname" id="bg-name"></span>
-      </div>
-    </div>
-
-    <div class="tone-section">
-      <div class="section-label">alert tone</div>
-      <div class="tone-row">
-        <button class="tone-btn selected" data-tone="bell" onclick="selectTone(this)">Bell</button>
-        <button class="tone-btn" data-tone="chime" onclick="selectTone(this)">Chime</button>
-        <button class="tone-btn" data-tone="digital" onclick="selectTone(this)">Digital</button>
-        <button class="tone-btn" data-tone="soft" onclick="selectTone(this)">Soft</button>
-        <button class="tone-btn" data-tone="urgent" onclick="selectTone(this)">Urgent</button>
-      </div>
-      <div class="upload-row">
-        <label class="upload-label">
-          ＋ upload your own
-          <input type="file" id="custom-file" accept="audio/*">
-        </label>
-        <span class="upload-fname" id="custom-name">mp3, wav, ogg…</span>
-      </div>
-    </div>
-
-    <div id="notif-status"></div>
-    <div class="btns">
+    <div class="bottom-row">
       <button class="btn btn-primary" id="btn-start">START</button>
+      <button class="icon-btn" id="btn-settings" title="Settings">⚙</button>
+      <div id="notif-dot" title="notifications"></div>
     </div>
   </div>
 
   <div id="running">
     <div id="task-label"></div>
     <div id="display">25:00</div>
-    <div class="btns">
+    <div class="bottom-row">
       <button class="btn btn-secondary" id="btn-pause">PAUSE</button>
       <button class="btn btn-secondary" id="btn-cancel">CANCEL</button>
+    </div>
+  </div>
+
+  <div id="overlay">
+    <div id="panel">
+      <div class="panel-header">
+        <span class="panel-title">settings</span>
+        <button class="close-btn" id="btn-close">✕</button>
+      </div>
+
+      <div class="p-section">
+        <div class="p-label">background</div>
+        <div class="tab-row">
+          <button class="tab-btn active" onclick="switchTab('gradient',this)">Gradient</button>
+          <button class="tab-btn" onclick="switchTab('image',this)">Image</button>
+        </div>
+        <div id="tab-gradient" class="tab-content active">
+          <div class="grad-row">
+            <label>colors</label>
+            <input type="color" id="gc1" value="#2d1b69">
+            <input type="color" id="gc2" value="#6b2fa0">
+            <input type="color" id="gc3" value="#c2185b">
+          </div>
+          <div class="grad-row">
+            <label>angle</label>
+            <input type="range" id="g-angle" min="0" max="360" value="135" oninput="updateGrad()">
+            <span id="g-angle-out">135°</span>
+          </div>
+          <div class="grad-preview" id="grad-preview"></div>
+          <button class="apply-btn" onclick="applyGradient()">apply</button>
+        </div>
+        <div id="tab-image" class="tab-content">
+          <div class="upload-row">
+            <label class="upload-label">＋ image<input type="file" id="bg-file" accept="image/*"></label>
+            <span class="upload-fname" id="bg-name">jpg, png, gif…</span>
+          </div>
+          <div id="img-controls" style="display:none;flex-direction:column;gap:8px">
+            <div class="grad-row"><label>pos x</label><input type="range" id="img-x" min="0" max="100" value="50" oninput="updateImgPos()"><span id="img-x-out">50%</span></div>
+            <div class="grad-row"><label>pos y</label><input type="range" id="img-y" min="0" max="100" value="50" oninput="updateImgPos()"><span id="img-y-out">50%</span></div>
+            <div class="grad-row"><label>zoom</label><input type="range" id="img-z" min="100" max="300" value="100" oninput="updateImgPos()"><span id="img-z-out">100%</span></div>
+            <button class="apply-btn" onclick="clearImg()">remove image</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-section">
+        <div class="p-label">alert tone</div>
+        <div class="tone-row">
+          <button class="tone-btn selected" data-tone="bell" onclick="selectTone(this)">Bell</button>
+          <button class="tone-btn" data-tone="chime" onclick="selectTone(this)">Chime</button>
+          <button class="tone-btn" data-tone="digital" onclick="selectTone(this)">Digital</button>
+          <button class="tone-btn" data-tone="soft" onclick="selectTone(this)">Soft</button>
+          <button class="tone-btn" data-tone="urgent" onclick="selectTone(this)">Urgent</button>
+        </div>
+        <div class="upload-row">
+          <label class="upload-label">＋ upload<input type="file" id="custom-file" accept="audio/*"></label>
+          <span class="upload-fname" id="custom-name">mp3, wav, ogg…</span>
+        </div>
+      </div>
+
+      <div class="p-section">
+        <div class="p-label">notifications</div>
+        <button class="apply-btn" onclick="askNotif()">enable browser notifications</button>
+        <div id="notif-msg" style="font-size:10px;color:rgba(255,255,255,0.4);font-family:'Space Mono',monospace"></div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-  const BG_PRESETS = [
-    { color: '#2d1b69', style: 'linear-gradient(135deg,#2d1b69 0%,#6b2fa0 50%,#c2185b 100%)' },
-    { color: '#0d1b2a', style: 'linear-gradient(135deg,#0d1b2a 0%,#1a4971 50%,#0891b2 100%)' },
-    { color: '#0a2118', style: 'linear-gradient(135deg,#0a2118 0%,#1a4731 50%,#2d7a4f 100%)' },
-    { color: '#1a0a00', style: 'linear-gradient(135deg,#1a0a00 0%,#7c2d12 50%,#c2410c 100%)' },
-    { color: '#111', style: 'linear-gradient(135deg,#0a0a0a 0%,#1c1c2e 50%,#2d2d44 100%)' },
-    { color: '#2d0a1f', style: 'linear-gradient(135deg,#2d0a1f 0%,#7c1053 50%,#c2185b 100%)' },
-  ];
-  let currentBgIdx = 0;
-  let customBgUrl = null;
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
 
-  function applyBg() {
-    const app = document.getElementById('app');
-    if (customBgUrl) {
-      app.style.background = `url('${customBgUrl}') center/cover no-repeat`;
-    } else {
-      app.style.background = BG_PRESETS[currentBgIdx].style;
-    }
-  }
+function updateGrad(){
+  const a=document.getElementById('g-angle').value;
+  document.getElementById('g-angle-out').textContent=a+'°';
+  const c1=document.getElementById('gc1').value,c2=document.getElementById('gc2').value,c3=document.getElementById('gc3').value;
+  document.getElementById('grad-preview').style.background=`linear-gradient(${a}deg,${c1} 0%,${c2} 50%,${c3} 100%)`;
+}
+['gc1','gc2','gc3','g-angle'].forEach(id=>document.getElementById(id).addEventListener('input',updateGrad));
 
-  function buildBgPresets() {
-    const c = document.getElementById('bg-presets');
-    c.innerHTML = '';
-    BG_PRESETS.forEach((b, i) => {
-      const d = document.createElement('div');
-      d.className = 'bg-preset' + (i === currentBgIdx && !customBgUrl ? ' selected' : '');
-      d.style.background = b.style;
-      d.title = 'Preset ' + (i + 1);
-      d.onclick = () => { currentBgIdx = i; customBgUrl = null; document.getElementById('bg-name').textContent = ''; buildBgPresets(); applyBg(); };
-      c.appendChild(d);
-    });
-  }
+function applyGradient(){
+  const a=document.getElementById('g-angle').value,c1=document.getElementById('gc1').value,c2=document.getElementById('gc2').value,c3=document.getElementById('gc3').value;
+  document.getElementById('app').style.background=`linear-gradient(${a}deg,${c1} 0%,${c2} 50%,${c3} 100%)`;
+  document.getElementById('bg-img').style.display='none';
+}
 
-  document.getElementById('bg-file').addEventListener('change', function () {
-    const file = this.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      customBgUrl = e.target.result;
-      document.getElementById('bg-name').textContent = file.name;
-      buildBgPresets();
-      applyBg();
-    };
-    reader.readAsDataURL(file);
-  });
-
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  let customBuffer = null, selectedTone = 'bell';
-  const TONES = {
-    bell: (c) => { const t = c.currentTime, o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.type = 'sine'; o.frequency.setValueAtTime(880, t); o.frequency.exponentialRampToValueAtTime(440, t + 1.2); g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.5); o.start(t); o.stop(t + 1.5); },
-    chime: (c) => { [[523, 0], [659, 0.18], [784, 0.36], [1047, 0.54]].forEach(([f, d]) => { const t = c.currentTime + d, o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.4, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.7); o.start(t); o.stop(t + 0.7); }); },
-    digital: (c) => { [0, 0.15, 0.3].forEach(d => { const t = c.currentTime + d, o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.type = 'square'; o.frequency.value = 880; g.gain.setValueAtTime(0.3, t); g.gain.setValueAtTime(0, t + 0.1); o.start(t); o.stop(t + 0.12); }); },
-    soft: (c) => { const t = c.currentTime, o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.type = 'sine'; o.frequency.value = 528; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.4, t + 0.3); g.gain.exponentialRampToValueAtTime(0.001, t + 2); o.start(t); o.stop(t + 2); },
-    urgent: (c) => { [0, 0.2, 0.4, 0.6, 0.8].forEach((d, i) => { const t = c.currentTime + d, o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.type = 'sawtooth'; o.frequency.value = i % 2 === 0 ? 660 : 880; g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.15); o.start(t); o.stop(t + 0.18); }); }
+document.getElementById('bg-file').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  document.getElementById('bg-name').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const layer=document.getElementById('bg-img');
+    layer.style.backgroundImage=`url('${e.target.result}')`;
+    layer.style.backgroundSize='cover';layer.style.backgroundPosition='50% 50%';layer.style.display='block';
+    const ic=document.getElementById('img-controls');ic.style.display='flex';
+    ['img-x','img-y','img-z'].forEach(id=>document.getElementById(id).value=id==='img-z'?100:50);
+    document.getElementById('img-x-out').textContent='50%';document.getElementById('img-y-out').textContent='50%';document.getElementById('img-z-out').textContent='100%';
   };
-  function playCustom() { if (!customBuffer) return; const s = ctx.createBufferSource(); s.buffer = customBuffer; s.connect(ctx.destination); s.start(); }
-  function playTone() { ctx.resume().then(() => { if (selectedTone === 'custom' && customBuffer) playCustom(); else if (TONES[selectedTone]) TONES[selectedTone](ctx); }); }
-  function selectTone(btn) { document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); selectedTone = btn.dataset.tone; playTone(); }
+  reader.readAsDataURL(file);
+});
 
-  document.getElementById('custom-file').addEventListener('change', function () {
-    const file = this.files[0]; if (!file) return;
-    document.getElementById('custom-name').textContent = file.name;
-    const reader = new FileReader();
-    reader.onload = e => { ctx.resume().then(() => { ctx.decodeAudioData(e.target.result.slice(0), buf => { customBuffer = buf; document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('selected')); const ex = document.querySelector('.tone-btn[data-tone="custom"]'); if (ex) { ex.classList.add('selected'); selectedTone = 'custom'; playTone(); return; } const btn = document.createElement('button'); btn.className = 'tone-btn selected'; btn.dataset.tone = 'custom'; btn.textContent = 'Custom'; btn.onclick = () => selectTone(btn); document.querySelector('.tone-row').appendChild(btn); selectedTone = 'custom'; playTone(); }, () => { document.getElementById('custom-name').textContent = 'could not decode'; }); }); };
-    reader.readAsArrayBuffer(file);
-  });
+function updateImgPos(){
+  const x=document.getElementById('img-x').value,y=document.getElementById('img-y').value,z=document.getElementById('img-z').value;
+  document.getElementById('img-x-out').textContent=x+'%';document.getElementById('img-y-out').textContent=y+'%';document.getElementById('img-z-out').textContent=z+'%';
+  const l=document.getElementById('bg-img');l.style.backgroundPosition=`${x}% ${y}%`;l.style.backgroundSize=z==='100'?'cover':`${z}%`;
+}
+function clearImg(){
+  document.getElementById('bg-img').style.display='none';document.getElementById('img-controls').style.display='none';
+  document.getElementById('bg-name').textContent='jpg, png, gif…';document.getElementById('bg-file').value='';
+}
 
-  let total = 0, left = 0, running = false, iv = null;
-  function pad(n) { return String(n).padStart(2, '0') }
-  function fmt(s) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60; return h > 0 ? `${pad(h)}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`; }
+const actx=new (window.AudioContext||window.webkitAudioContext)();
+let customBuffer=null,selectedTone='bell';
+const TONES={
+  bell:(c)=>{const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(880,t);o.frequency.exponentialRampToValueAtTime(440,t+1.2);g.gain.setValueAtTime(0.6,t);g.gain.exponentialRampToValueAtTime(0.001,t+1.5);o.start(t);o.stop(t+1.5);},
+  chime:(c)=>{[[523,0],[659,0.18],[784,0.36],[1047,0.54]].forEach(([f,d])=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.4,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.7);o.start(t);o.stop(t+0.7);});},
+  digital:(c)=>{[0,0.15,0.3].forEach(d=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.value=880;g.gain.setValueAtTime(0.3,t);g.gain.setValueAtTime(0,t+0.1);o.start(t);o.stop(t+0.12);});},
+  soft:(c)=>{const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=528;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.4,t+0.3);g.gain.exponentialRampToValueAtTime(0.001,t+2);o.start(t);o.stop(t+2);},
+  urgent:(c)=>{[0,0.2,0.4,0.6,0.8].forEach((d,i)=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.value=i%2===0?660:880;g.gain.setValueAtTime(0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.15);o.start(t);o.stop(t+0.18);});}
+};
+function playTone(){actx.resume().then(()=>{if(selectedTone==='custom'&&customBuffer){const s=actx.createBufferSource();s.buffer=customBuffer;s.connect(actx.destination);s.start();}else if(TONES[selectedTone])TONES[selectedTone](actx);});}
+function selectTone(btn){document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');selectedTone=btn.dataset.tone;playTone();}
 
-  function requestNotifPermission() {
-    if (!('Notification' in window)) { document.getElementById('notif-status').textContent = 'notifications not supported'; return; }
-    if (Notification.permission === 'granted') { document.getElementById('notif-status').textContent = 'notifications on'; }
-    else if (Notification.permission !== 'denied') { document.getElementById('notif-status').innerHTML = '<a onclick="askNotif()">enable browser notifications</a>'; }
-    else { document.getElementById('notif-status').textContent = 'notifications blocked — check browser settings'; }
-  }
-  function askNotif() { Notification.requestPermission().then(p => { document.getElementById('notif-status').textContent = p === 'granted' ? 'notifications on' : 'notifications blocked — check browser settings'; }); }
-  function sendNotif(task) { if (Notification.permission === 'granted') { new Notification("Time's up!", { body: task ? `"${task}" is done.` : 'Your timer has finished.' }); } }
+document.getElementById('custom-file').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  document.getElementById('custom-name').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{actx.resume().then(()=>{actx.decodeAudioData(e.target.result.slice(0),buf=>{customBuffer=buf;document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('selected'));const ex=document.querySelector('.tone-btn[data-tone="custom"]');if(ex){ex.classList.add('selected');selectedTone='custom';playTone();return;}const btn=document.createElement('button');btn.className='tone-btn selected';btn.dataset.tone='custom';btn.textContent='Custom';btn.onclick=()=>selectTone(btn);document.querySelector('.tone-row').appendChild(btn);selectedTone='custom';playTone();},()=>{document.getElementById('custom-name').textContent='could not decode';});});};
+  reader.readAsArrayBuffer(file);
+});
 
-  document.getElementById('btn-start').onclick = () => {
-    const h = parseInt(document.getElementById('inp-h').value) || 0;
-    const m = parseInt(document.getElementById('inp-m').value) || 0;
-    const s = parseInt(document.getElementById('inp-s').value) || 0;
-    total = h * 3600 + m * 60 + s; if (total <= 0) return;
-    left = total; ctx.resume();
-    const task = document.getElementById('task-input').value.trim();
-    const lbl = document.getElementById('task-label');
-    if (task) { lbl.textContent = task; lbl.style.display = 'block'; } else { lbl.style.display = 'none'; }
-    document.getElementById('setup').style.display = 'none';
-    document.getElementById('running').style.display = 'flex';
-    tick(); running = true;
-    iv = setInterval(() => { if (running) { left--; tick(); } }, 1000);
-  };
+document.getElementById('btn-settings').onclick=()=>document.getElementById('overlay').classList.add('open');
+document.getElementById('btn-close').onclick=()=>document.getElementById('overlay').classList.remove('open');
+document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 
-  function tick() {
-    const d = document.getElementById('display');
-    d.style.display = 'block'; d.textContent = fmt(left);
-    const pct = left / total;
-    if (left <= 0) { clearInterval(iv); running = false; d.textContent = '00:00'; d.className = 'done'; document.getElementById('btn-pause').textContent = 'START OVER'; document.getElementById('btn-cancel').style.display = 'none'; playTone(); sendNotif(document.getElementById('task-label').textContent); }
-    else if (pct <= 0.2) { d.className = 'warning'; } else { d.className = ''; }
-  }
+function checkNotif(){
+  if(!('Notification' in window))return;
+  const dot=document.getElementById('notif-dot');
+  dot.classList.toggle('on',Notification.permission==='granted');
+  document.getElementById('notif-msg').textContent=Notification.permission==='granted'?'notifications on':Notification.permission==='denied'?'blocked — check browser settings':'';
+}
+function askNotif(){Notification.requestPermission().then(()=>checkNotif());}
 
-  document.getElementById('btn-pause').onclick = function () { if (left <= 0) { reset(); return; } if (running) { running = false; this.textContent = 'RESUME'; } else { running = true; this.textContent = 'PAUSE'; } };
-  document.getElementById('btn-cancel').onclick = reset;
-  function reset() { clearInterval(iv); running = false; left = 0; document.getElementById('display').style.display = 'none'; document.getElementById('display').className = ''; document.getElementById('setup').style.display = 'flex'; document.getElementById('running').style.display = 'none'; document.getElementById('btn-pause').textContent = 'PAUSE'; document.getElementById('btn-cancel').style.display = ''; }
+let total=0,left=0,running=false,iv=null;
+function pad(n){return String(n).padStart(2,'0')}
+function fmt(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?`${pad(h)}:${pad(m)}:${pad(sec)}`:`${pad(m)}:${pad(sec)}`;}
 
-  buildBgPresets(); applyBg(); requestNotifPermission();
+document.getElementById('btn-start').onclick=()=>{
+  const h=parseInt(document.getElementById('inp-h').value)||0,m=parseInt(document.getElementById('inp-m').value)||0,s=parseInt(document.getElementById('inp-s').value)||0;
+  total=h*3600+m*60+s;if(total<=0)return;
+  left=total;actx.resume();
+  const task=document.getElementById('task-input').value.trim();
+  const lbl=document.getElementById('task-label');
+  lbl.textContent=task;lbl.style.display=task?'block':'none';
+  document.getElementById('setup').style.display='none';
+  document.getElementById('running').style.display='flex';
+  tick();running=true;iv=setInterval(()=>{if(running){left--;tick();}},1000);
+};
+
+function tick(){
+  const d=document.getElementById('display');d.textContent=fmt(left);
+  if(left<=0){clearInterval(iv);running=false;d.textContent='00:00';d.className='done';document.getElementById('btn-pause').textContent='START OVER';document.getElementById('btn-cancel').style.display='none';playTone();if(Notification.permission==='granted'){const t=document.getElementById('task-label').textContent;new Notification("Time's up!",{body:t?`"${t}" is done.`:'Your timer has finished.'});}}
+  else if(left/total<=0.2){d.className='warning';}else{d.className='';}
+}
+
+document.getElementById('btn-pause').onclick=function(){if(left<=0){reset();return;}if(running){running=false;this.textContent='RESUME';}else{running=true;this.textContent='PAUSE';}};
+document.getElementById('btn-cancel').onclick=reset;
+function reset(){clearInterval(iv);running=false;left=0;document.getElementById('display').className='';document.getElementById('setup').style.display='flex';document.getElementById('running').style.display='none';document.getElementById('btn-pause').textContent='PAUSE';document.getElementById('btn-cancel').style.display='';}
+
+updateGrad();checkNotif();
 </script>
