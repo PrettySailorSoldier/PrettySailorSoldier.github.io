@@ -2,19 +2,20 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-#app{min-height:360px;width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;background:linear-gradient(135deg,#2d1b69 0%,#6b2fa0 50%,#c2185b 100%);border-radius:16px;padding:3rem 2rem;position:relative;overflow:hidden;margin:0 auto}
+html,body{height:100%;width:100%;overflow:hidden;background:#000}
+#app{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3rem;background:linear-gradient(135deg,#2d1b69 0%,#6b2fa0 50%,#c2185b 100%);position:relative;overflow:hidden}
 #bg-img{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;display:none}
 #setup,#running,#alerting{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1rem}
 #running,#alerting{display:none}
-#task-input{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:#fff;font-size:16px;padding:12px 16px;width:320px;text-align:center;font-family:'Space Mono',monospace;outline:none}
+#task-input{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#fff;font-size:20px;padding:16px 24px;width:400px;text-align:center;font-family:'Space Mono',monospace;outline:none}
 #task-input::placeholder{color:rgba(255,255,255,0.35)}
 #task-input:focus{border-color:rgba(255,255,255,0.55)}
 .time-inputs{display:flex;align-items:center;gap:6px}
 .time-box{display:flex;flex-direction:column;align-items:center;gap:3px}
 .time-box label{font-size:9px;color:rgba(255,255,255,0.45);font-family:'Space Mono',monospace;letter-spacing:0.08em;text-transform:uppercase}
-.time-box input[type=number]{width:72px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:#fff;font-size:32px;font-family:'Space Mono',monospace;font-weight:700;padding:8px 6px;text-align:center;outline:none}
+.time-box input[type=number]{width:100px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#fff;font-size:48px;font-family:'Space Mono',monospace;font-weight:700;padding:12px 8px;text-align:center;outline:none}
 .time-box input[type=number]::-webkit-inner-spin-button{opacity:0}
-.sep{font-size:32px;font-family:'Space Mono',monospace;font-weight:700;color:rgba(255,255,255,0.4);margin-top:16px}
+.sep{font-size:48px;font-family:'Space Mono',monospace;font-weight:700;color:rgba(255,255,255,0.4);margin-top:24px}
 .bottom-row{display:flex;align-items:center;gap:10px}
 .btn{padding:12px 32px;border-radius:28px;border:none;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.04em}
 .btn-primary{background:rgba(255,255,255,0.92);color:#2d1b69}
@@ -25,7 +26,7 @@
 .btn-danger:hover{background:rgba(248,113,113,0.35);color:#fff}
 .icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
 .icon-btn:hover{background:rgba(255,255,255,0.2);color:#fff;border-color:rgba(255,255,255,0.6)}
-#display{font-family:'Space Mono',monospace;font-size:110px;font-weight:700;color:#fff;letter-spacing:-4px;line-height:1;text-shadow:0 4px 24px rgba(0,0,0,0.5)}
+#display{font-family:'Space Mono',monospace;font-size:160px;font-weight:700;color:#fff;letter-spacing:-6px;line-height:1;text-shadow:0 8px 32px rgba(0,0,0,0.5)}
 #display.warning{color:#fbbf24}
 #display.done{color:#f87171}
 #task-label{font-family:'Space Mono',monospace;font-size:14px;color:rgba(255,255,255,0.65);text-align:center;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 8px rgba(0,0,0,0.4);display:none}
@@ -40,9 +41,9 @@
 .snooze-row input[type=number]::-webkit-inner-spin-button{opacity:0}
 
 /* overlay */
-#overlay{position:absolute;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.45)}
+#overlay{position:absolute;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.45)}
 #overlay.open{display:flex}
-#panel{background:#14112a;border-radius:12px 12px 0 0;width:100%;padding:1.2rem 1.4rem 1.4rem;display:flex;flex-direction:column;gap:1rem;max-height:85%;overflow-y:auto}
+#panel{background:#14112a;border-radius:24px 24px 0 0;width:100%;max-width:500px;padding:2rem;display:flex;flex-direction:column;gap:1.5rem;max-height:85%;overflow-y:auto;box-shadow:0 -10px 40px rgba(0,0,0,0.4)}
 .panel-header{display:flex;align-items:center;justify-content:space-between}
 .panel-title{font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase}
 .close-btn{background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer;line-height:1;padding:0}
