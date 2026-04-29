@@ -3,7 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;width:100%;overflow:hidden;background:#000}
-#app{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3rem;background:linear-gradient(135deg,#2d1b69 0%,#6b2fa0 50%,#c2185b 100%);position:relative;overflow:hidden}
+#app{position:fixed;inset:0;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3rem;background:linear-gradient(135deg,#2d1b69 0%,#6b2fa0 50%,#c2185b 100%);z-index:1;overflow:hidden}
 #bg-img{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;display:none}
 #setup,#running,#alerting{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1rem}
 #running,#alerting{display:none}
