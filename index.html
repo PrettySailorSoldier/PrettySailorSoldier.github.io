@@ -4,8 +4,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 #app{min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;background:linear-gradient(135deg,#2d1b69 0%,#6b2fa0 50%,#c2185b 100%);border-radius:12px;padding:2rem 1rem;position:relative;overflow:hidden}
 #bg-img{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;display:none}
-#setup,#running{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1rem}
-#running{display:none}
+#setup,#running,#alerting{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1rem}
+#running,#alerting{display:none}
 #task-input{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-size:13px;padding:7px 12px;width:260px;text-align:center;font-family:'Space Mono',monospace;outline:none}
 #task-input::placeholder{color:rgba(255,255,255,0.35)}
 #task-input:focus{border-color:rgba(255,255,255,0.55)}
@@ -21,18 +21,26 @@
 .btn-primary:hover{background:#fff;transform:scale(1.04)}
 .btn-secondary{background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.3)}
 .btn-secondary:hover{background:rgba(255,255,255,0.22)}
+.btn-danger{background:rgba(248,113,113,0.2);color:#fca5a5;border:1px solid rgba(248,113,113,0.4)}
+.btn-danger:hover{background:rgba(248,113,113,0.35);color:#fff}
 .icon-btn{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
 .icon-btn:hover{background:rgba(255,255,255,0.2);color:#fff;border-color:rgba(255,255,255,0.6)}
 #display{font-family:'Space Mono',monospace;font-size:76px;font-weight:700;color:#fff;letter-spacing:-2px;line-height:1;text-shadow:0 2px 16px rgba(0,0,0,0.5)}
 #display.warning{color:#fbbf24}
-#display.done{color:#f87171;animation:pulse 0.8s ease-in-out infinite alternate}
-@keyframes pulse{from{opacity:1}to{opacity:0.5}}
+#display.done{color:#f87171}
 #task-label{font-family:'Space Mono',monospace;font-size:12px;color:rgba(255,255,255,0.65);text-align:center;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 8px rgba(0,0,0,0.4);display:none}
 #notif-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);flex-shrink:0}
 #notif-dot.on{background:#4ade80}
+#alert-label{font-family:'Space Mono',monospace;font-size:13px;color:rgba(255,255,255,0.8);text-align:center;animation:pulse 0.8s ease-in-out infinite alternate}
+#alert-task{font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);text-align:center;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@keyframes pulse{from{opacity:1}to{opacity:0.4}}
+.snooze-row{display:flex;align-items:center;gap:6px}
+.snooze-row label{font-size:10px;color:rgba(255,255,255,0.5);font-family:'Space Mono',monospace}
+.snooze-row input[type=number]{width:44px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;font-size:13px;font-family:'Space Mono',monospace;font-weight:700;padding:4px;text-align:center;outline:none}
+.snooze-row input[type=number]::-webkit-inner-spin-button{opacity:0}
 
 /* overlay */
-#overlay{position:absolute;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;padding-bottom:0;border-radius:12px;background:rgba(0,0,0,0.45)}
+#overlay{position:absolute;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.45)}
 #overlay.open{display:flex}
 #panel{background:#14112a;border-radius:12px 12px 0 0;width:100%;padding:1.2rem 1.4rem 1.4rem;display:flex;flex-direction:column;gap:1rem;max-height:85%;overflow-y:auto}
 .panel-header{display:flex;align-items:center;justify-content:space-between}
@@ -93,13 +101,26 @@
     </div>
   </div>
 
+  <div id="alerting">
+    <div id="alert-label">time's up</div>
+    <div id="alert-task"></div>
+    <div class="snooze-row">
+      <label>snooze</label>
+      <input type="number" id="snooze-min" value="5" min="1" max="60">
+      <label>min</label>
+    </div>
+    <div class="bottom-row">
+      <button class="btn btn-secondary" id="btn-snooze">SNOOZE</button>
+      <button class="btn btn-danger" id="btn-stop">STOP</button>
+    </div>
+  </div>
+
   <div id="overlay">
     <div id="panel">
       <div class="panel-header">
         <span class="panel-title">settings</span>
         <button class="close-btn" id="btn-close">✕</button>
       </div>
-
       <div class="p-section">
         <div class="p-label">background</div>
         <div class="tab-row">
@@ -134,7 +155,6 @@
           </div>
         </div>
       </div>
-
       <div class="p-section">
         <div class="p-label">alert tone</div>
         <div class="tone-row">
@@ -149,7 +169,6 @@
           <span class="upload-fname" id="custom-name">mp3, wav, ogg…</span>
         </div>
       </div>
-
       <div class="p-section">
         <div class="p-label">notifications</div>
         <button class="apply-btn" onclick="askNotif()">enable browser notifications</button>
@@ -160,69 +179,42 @@
 </div>
 
 <script>
-function switchTab(name,btn){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-'+name).classList.add('active');
-}
-
-function updateGrad(){
-  const a=document.getElementById('g-angle').value;
-  document.getElementById('g-angle-out').textContent=a+'°';
-  const c1=document.getElementById('gc1').value,c2=document.getElementById('gc2').value,c3=document.getElementById('gc3').value;
-  document.getElementById('grad-preview').style.background=`linear-gradient(${a}deg,${c1} 0%,${c2} 50%,${c3} 100%)`;
-}
+function switchTab(name,btn){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+name).classList.add('active');}
+function updateGrad(){const a=document.getElementById('g-angle').value;document.getElementById('g-angle-out').textContent=a+'°';const c1=document.getElementById('gc1').value,c2=document.getElementById('gc2').value,c3=document.getElementById('gc3').value;document.getElementById('grad-preview').style.background=`linear-gradient(${a}deg,${c1} 0%,${c2} 50%,${c3} 100%)`;}
 ['gc1','gc2','gc3','g-angle'].forEach(id=>document.getElementById(id).addEventListener('input',updateGrad));
-
-function applyGradient(){
-  const a=document.getElementById('g-angle').value,c1=document.getElementById('gc1').value,c2=document.getElementById('gc2').value,c3=document.getElementById('gc3').value;
-  document.getElementById('app').style.background=`linear-gradient(${a}deg,${c1} 0%,${c2} 50%,${c3} 100%)`;
-  document.getElementById('bg-img').style.display='none';
-}
-
-document.getElementById('bg-file').addEventListener('change',function(){
-  const file=this.files[0];if(!file)return;
-  document.getElementById('bg-name').textContent=file.name;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const layer=document.getElementById('bg-img');
-    layer.style.backgroundImage=`url('${e.target.result}')`;
-    layer.style.backgroundSize='cover';layer.style.backgroundPosition='50% 50%';layer.style.display='block';
-    const ic=document.getElementById('img-controls');ic.style.display='flex';
-    ['img-x','img-y','img-z'].forEach(id=>document.getElementById(id).value=id==='img-z'?100:50);
-    document.getElementById('img-x-out').textContent='50%';document.getElementById('img-y-out').textContent='50%';document.getElementById('img-z-out').textContent='100%';
-  };
-  reader.readAsDataURL(file);
-});
-
-function updateImgPos(){
-  const x=document.getElementById('img-x').value,y=document.getElementById('img-y').value,z=document.getElementById('img-z').value;
-  document.getElementById('img-x-out').textContent=x+'%';document.getElementById('img-y-out').textContent=y+'%';document.getElementById('img-z-out').textContent=z+'%';
-  const l=document.getElementById('bg-img');l.style.backgroundPosition=`${x}% ${y}%`;l.style.backgroundSize=z==='100'?'cover':`${z}%`;
-}
-function clearImg(){
-  document.getElementById('bg-img').style.display='none';document.getElementById('img-controls').style.display='none';
-  document.getElementById('bg-name').textContent='jpg, png, gif…';document.getElementById('bg-file').value='';
-}
+function applyGradient(){const a=document.getElementById('g-angle').value,c1=document.getElementById('gc1').value,c2=document.getElementById('gc2').value,c3=document.getElementById('gc3').value;document.getElementById('app').style.background=`linear-gradient(${a}deg,${c1} 0%,${c2} 50%,${c3} 100%)`;document.getElementById('bg-img').style.display='none';}
+document.getElementById('bg-file').addEventListener('change',function(){const file=this.files[0];if(!file)return;document.getElementById('bg-name').textContent=file.name;const reader=new FileReader();reader.onload=e=>{const l=document.getElementById('bg-img');l.style.backgroundImage=`url('${e.target.result}')`;l.style.backgroundSize='cover';l.style.backgroundPosition='50% 50%';l.style.display='block';const ic=document.getElementById('img-controls');ic.style.display='flex';['img-x','img-y'].forEach(id=>document.getElementById(id).value=50);document.getElementById('img-z').value=100;['img-x-out','img-y-out'].forEach(id=>document.getElementById(id).textContent='50%');document.getElementById('img-z-out').textContent='100%';};reader.readAsDataURL(file);});
+function updateImgPos(){const x=document.getElementById('img-x').value,y=document.getElementById('img-y').value,z=document.getElementById('img-z').value;document.getElementById('img-x-out').textContent=x+'%';document.getElementById('img-y-out').textContent=y+'%';document.getElementById('img-z-out').textContent=z+'%';const l=document.getElementById('bg-img');l.style.backgroundPosition=`${x}% ${y}%`;l.style.backgroundSize=z==='100'?'cover':`${z}%`;}
+function clearImg(){document.getElementById('bg-img').style.display='none';document.getElementById('img-controls').style.display='none';document.getElementById('bg-name').textContent='jpg, png, gif…';document.getElementById('bg-file').value='';}
 
 const actx=new (window.AudioContext||window.webkitAudioContext)();
-let customBuffer=null,selectedTone='bell';
+let customBuffer=null,selectedTone='bell',alertLoop=null,alertSource=null;
 const TONES={
-  bell:(c)=>{const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(880,t);o.frequency.exponentialRampToValueAtTime(440,t+1.2);g.gain.setValueAtTime(0.6,t);g.gain.exponentialRampToValueAtTime(0.001,t+1.5);o.start(t);o.stop(t+1.5);},
-  chime:(c)=>{[[523,0],[659,0.18],[784,0.36],[1047,0.54]].forEach(([f,d])=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.4,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.7);o.start(t);o.stop(t+0.7);});},
-  digital:(c)=>{[0,0.15,0.3].forEach(d=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.value=880;g.gain.setValueAtTime(0.3,t);g.gain.setValueAtTime(0,t+0.1);o.start(t);o.stop(t+0.12);});},
-  soft:(c)=>{const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=528;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.4,t+0.3);g.gain.exponentialRampToValueAtTime(0.001,t+2);o.start(t);o.stop(t+2);},
-  urgent:(c)=>{[0,0.2,0.4,0.6,0.8].forEach((d,i)=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.value=i%2===0?660:880;g.gain.setValueAtTime(0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.15);o.start(t);o.stop(t+0.18);});}
+  bell:(c,cb)=>{const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(880,t);o.frequency.exponentialRampToValueAtTime(440,t+1.2);g.gain.setValueAtTime(0.6,t);g.gain.exponentialRampToValueAtTime(0.001,t+1.5);o.start(t);o.stop(t+1.5);o.onended=cb;},
+  chime:(c,cb)=>{const notes=[[523,0],[659,0.18],[784,0.36],[1047,0.54]];notes.forEach(([f,d],i)=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.4,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.7);o.start(t);o.stop(t+0.7);if(i===notes.length-1)o.onended=cb;});},
+  digital:(c,cb)=>{const beeps=[0,0.15,0.3];beeps.forEach((d,i)=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.value=880;g.gain.setValueAtTime(0.3,t);g.gain.setValueAtTime(0,t+0.1);o.start(t);o.stop(t+0.12);if(i===beeps.length-1)o.onended=cb;});},
+  soft:(c,cb)=>{const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=528;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.4,t+0.3);g.gain.exponentialRampToValueAtTime(0.001,t+2);o.start(t);o.stop(t+2);o.onended=cb;},
+  urgent:(c,cb)=>{const pts=[0,0.2,0.4,0.6,0.8];pts.forEach((d,i)=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.value=i%2===0?660:880;g.gain.setValueAtTime(0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.15);o.start(t);o.stop(t+0.18);if(i===pts.length-1)o.onended=cb;});}
 };
-function playTone(){actx.resume().then(()=>{if(selectedTone==='custom'&&customBuffer){const s=actx.createBufferSource();s.buffer=customBuffer;s.connect(actx.destination);s.start();}else if(TONES[selectedTone])TONES[selectedTone](actx);});}
-function selectTone(btn){document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');selectedTone=btn.dataset.tone;playTone();}
+
+function loopTone(){
+  if(!alertActive)return;
+  actx.resume().then(()=>{
+    if(selectedTone==='custom'&&customBuffer){
+      const s=actx.createBufferSource();s.buffer=customBuffer;s.connect(actx.destination);s.onended=()=>{if(alertActive)setTimeout(loopTone,800);};s.start();
+    } else if(TONES[selectedTone]){
+      TONES[selectedTone](actx,()=>{if(alertActive)setTimeout(loopTone,800);});
+    }
+  });
+}
+
+function selectTone(btn){document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');selectedTone=btn.dataset.tone;actx.resume().then(()=>{if(selectedTone==='custom'&&customBuffer){const s=actx.createBufferSource();s.buffer=customBuffer;s.connect(actx.destination);s.start();}else if(TONES[selectedTone])TONES[selectedTone](actx,()=>{});});}
 
 document.getElementById('custom-file').addEventListener('change',function(){
   const file=this.files[0];if(!file)return;
   document.getElementById('custom-name').textContent=file.name;
   const reader=new FileReader();
-  reader.onload=e=>{actx.resume().then(()=>{actx.decodeAudioData(e.target.result.slice(0),buf=>{customBuffer=buf;document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('selected'));const ex=document.querySelector('.tone-btn[data-tone="custom"]');if(ex){ex.classList.add('selected');selectedTone='custom';playTone();return;}const btn=document.createElement('button');btn.className='tone-btn selected';btn.dataset.tone='custom';btn.textContent='Custom';btn.onclick=()=>selectTone(btn);document.querySelector('.tone-row').appendChild(btn);selectedTone='custom';playTone();},()=>{document.getElementById('custom-name').textContent='could not decode';});});};
+  reader.onload=e=>{actx.resume().then(()=>{actx.decodeAudioData(e.target.result.slice(0),buf=>{customBuffer=buf;document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('selected'));const ex=document.querySelector('.tone-btn[data-tone="custom"]');if(ex){ex.classList.add('selected');selectedTone='custom';return;}const btn=document.createElement('button');btn.className='tone-btn selected';btn.dataset.tone='custom';btn.textContent='Custom';btn.onclick=()=>selectTone(btn);document.querySelector('.tone-row').appendChild(btn);selectedTone='custom';},()=>{document.getElementById('custom-name').textContent='could not decode';});});};
   reader.readAsArrayBuffer(file);
 });
 
@@ -230,15 +222,10 @@ document.getElementById('btn-settings').onclick=()=>document.getElementById('ove
 document.getElementById('btn-close').onclick=()=>document.getElementById('overlay').classList.remove('open');
 document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 
-function checkNotif(){
-  if(!('Notification' in window))return;
-  const dot=document.getElementById('notif-dot');
-  dot.classList.toggle('on',Notification.permission==='granted');
-  document.getElementById('notif-msg').textContent=Notification.permission==='granted'?'notifications on':Notification.permission==='denied'?'blocked — check browser settings':'';
-}
+function checkNotif(){if(!('Notification' in window))return;document.getElementById('notif-dot').classList.toggle('on',Notification.permission==='granted');document.getElementById('notif-msg').textContent=Notification.permission==='granted'?'notifications on':Notification.permission==='denied'?'blocked — check browser settings':'';}
 function askNotif(){Notification.requestPermission().then(()=>checkNotif());}
 
-let total=0,left=0,running=false,iv=null;
+let total=0,left=0,running=false,iv=null,alertActive=false;
 function pad(n){return String(n).padStart(2,'0')}
 function fmt(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?`${pad(h)}:${pad(m)}:${pad(sec)}`:`${pad(m)}:${pad(sec)}`;}
 
@@ -247,22 +234,44 @@ document.getElementById('btn-start').onclick=()=>{
   total=h*3600+m*60+s;if(total<=0)return;
   left=total;actx.resume();
   const task=document.getElementById('task-input').value.trim();
-  const lbl=document.getElementById('task-label');
-  lbl.textContent=task;lbl.style.display=task?'block':'none';
-  document.getElementById('setup').style.display='none';
-  document.getElementById('running').style.display='flex';
-  tick();running=true;iv=setInterval(()=>{if(running){left--;tick();}},1000);
+  const lbl=document.getElementById('task-label');lbl.textContent=task;lbl.style.display=task?'block':'none';
+  show('running');tick();running=true;iv=setInterval(()=>{if(running){left--;tick();}},1000);
 };
+
+function show(screen){
+  ['setup','running','alerting'].forEach(id=>{document.getElementById(id).style.display=id===screen?'flex':'none';});
+}
 
 function tick(){
   const d=document.getElementById('display');d.textContent=fmt(left);
-  if(left<=0){clearInterval(iv);running=false;d.textContent='00:00';d.className='done';document.getElementById('btn-pause').textContent='START OVER';document.getElementById('btn-cancel').style.display='none';playTone();if(Notification.permission==='granted'){const t=document.getElementById('task-label').textContent;new Notification("Time's up!",{body:t?`"${t}" is done.`:'Your timer has finished.'});}}
-  else if(left/total<=0.2){d.className='warning';}else{d.className='';}
+  if(left<=0){
+    clearInterval(iv);running=false;
+    const task=document.getElementById('task-label').textContent;
+    document.getElementById('alert-task').textContent=task||'';
+    document.getElementById('alert-task').style.display=task?'block':'none';
+    show('alerting');alertActive=true;loopTone();
+    if(Notification.permission==='granted')new Notification("Time's up!",{body:task?`"${task}" is done.`:'Your timer has finished.'});
+  } else if(left/total<=0.2){d.className='warning';}else{d.className='';}
 }
 
-document.getElementById('btn-pause').onclick=function(){if(left<=0){reset();return;}if(running){running=false;this.textContent='RESUME';}else{running=true;this.textContent='PAUSE';}};
-document.getElementById('btn-cancel').onclick=reset;
-function reset(){clearInterval(iv);running=false;left=0;document.getElementById('display').className='';document.getElementById('setup').style.display='flex';document.getElementById('running').style.display='none';document.getElementById('btn-pause').textContent='PAUSE';document.getElementById('btn-cancel').style.display='';}
+document.getElementById('btn-snooze').onclick=()=>{
+  alertActive=false;
+  const mins=parseInt(document.getElementById('snooze-min').value)||5;
+  total=mins*60;left=total;
+  document.getElementById('display').className='';
+  show('running');tick();running=true;iv=setInterval(()=>{if(running){left--;tick();}},1000);
+};
 
-updateGrad();checkNotif();
+document.getElementById('btn-stop').onclick=()=>{
+  alertActive=false;
+  show('setup');
+  document.getElementById('display').className='';
+  document.getElementById('btn-pause').textContent='PAUSE';
+  document.getElementById('btn-cancel').style.display='';
+};
+
+document.getElementById('btn-pause').onclick=function(){if(running){running=false;this.textContent='RESUME';}else{running=true;this.textContent='PAUSE';}};
+document.getElementById('btn-cancel').onclick=()=>{clearInterval(iv);running=false;left=0;document.getElementById('display').className='';show('setup');document.getElementById('btn-pause').textContent='PAUSE';document.getElementById('btn-cancel').style.display='';};
+
+updateGrad();checkNotif();show('setup');
 </script>
