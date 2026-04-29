@@ -3,7 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;width:100%;overflow:hidden;background:#000}
-#app{position:fixed;inset:0;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3rem;background:linear-gradient(135deg,#2d1b69 0%,#6b2fa0 50%,#c2185b 100%);z-index:1;overflow:hidden}
+#app{position:absolute;inset:0;width:100% !important;height:100% !important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3rem;background:linear-gradient(135deg,#2d1b69 0%,#6b2fa0 50%,#c2185b 100%);border-radius:0 !important;margin:0 !important;overflow:hidden;z-index:1}
 #bg-img{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;display:none}
 #setup,#running,#alerting{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1rem}
 #running,#alerting{display:none}
@@ -43,7 +43,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:#000}
 /* overlay */
 #overlay{position:absolute;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.45)}
 #overlay.open{display:flex}
-#panel{background:#14112a;border-radius:24px 24px 0 0;width:100%;max-width:500px;padding:2rem;display:flex;flex-direction:column;gap:1.5rem;max-height:85%;overflow-y:auto;box-shadow:0 -10px 40px rgba(0,0,0,0.4)}
+#panel{background:#14112a;border-radius:0;width:100%;height:100%;max-width:none;padding:3rem;display:flex;flex-direction:column;gap:2rem;overflow-y:auto}
 .panel-header{display:flex;align-items:center;justify-content:space-between}
 .panel-title{font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase}
 .close-btn{background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer;line-height:1;padding:0}
