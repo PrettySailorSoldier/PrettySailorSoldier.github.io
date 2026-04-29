@@ -189,7 +189,7 @@ function updateImgPos(){const x=document.getElementById('img-x').value,y=documen
 function clearImg(){document.getElementById('bg-img').style.display='none';document.getElementById('img-controls').style.display='none';document.getElementById('bg-name').textContent='jpg, png, gif…';document.getElementById('bg-file').value='';}
 
 const actx=new (window.AudioContext||window.webkitAudioContext)();
-let customBuffer=null,selectedTone='bell',alertLoop=null,alertSource=null;
+let customTones={},selectedTone='bell',alertActive=false;
 const TONES={
   bell:(c,cb)=>{const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(880,t);o.frequency.exponentialRampToValueAtTime(440,t+1.2);g.gain.setValueAtTime(0.6,t);g.gain.exponentialRampToValueAtTime(0.001,t+1.5);o.start(t);o.stop(t+1.5);o.onended=cb;},
   chime:(c,cb)=>{const notes=[[523,0],[659,0.18],[784,0.36],[1047,0.54]];notes.forEach(([f,d],i)=>{const t=c.currentTime+d,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.4,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.7);o.start(t);o.stop(t+0.7);if(i===notes.length-1)o.onended=cb;});},
@@ -201,21 +201,44 @@ const TONES={
 function loopTone(){
   if(!alertActive)return;
   actx.resume().then(()=>{
-    if(selectedTone==='custom'&&customBuffer){
-      const s=actx.createBufferSource();s.buffer=customBuffer;s.connect(actx.destination);s.onended=()=>{if(alertActive)setTimeout(loopTone,800);};s.start();
+    if(selectedTone.startsWith('custom-')&&customTones[selectedTone]){
+      const s=actx.createBufferSource();s.buffer=customTones[selectedTone];s.connect(actx.destination);s.onended=()=>{if(alertActive)setTimeout(loopTone,800);};s.start();
     } else if(TONES[selectedTone]){
       TONES[selectedTone](actx,()=>{if(alertActive)setTimeout(loopTone,800);});
     }
   });
 }
 
-function selectTone(btn){document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');selectedTone=btn.dataset.tone;actx.resume().then(()=>{if(selectedTone==='custom'&&customBuffer){const s=actx.createBufferSource();s.buffer=customBuffer;s.connect(actx.destination);s.start();}else if(TONES[selectedTone])TONES[selectedTone](actx,()=>{});});}
+function selectTone(btn){
+  document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedTone=btn.dataset.tone;
+  actx.resume().then(()=>{
+    if(selectedTone.startsWith('custom-')&&customTones[selectedTone]){
+      const s=actx.createBufferSource();s.buffer=customTones[selectedTone];s.connect(actx.destination);s.start();
+    } else if(TONES[selectedTone])TONES[selectedTone](actx,()=>{});
+  });
+}
 
 document.getElementById('custom-file').addEventListener('change',function(){
   const file=this.files[0];if(!file)return;
-  document.getElementById('custom-name').textContent=file.name;
   const reader=new FileReader();
-  reader.onload=e=>{actx.resume().then(()=>{actx.decodeAudioData(e.target.result.slice(0),buf=>{customBuffer=buf;document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('selected'));const ex=document.querySelector('.tone-btn[data-tone="custom"]');if(ex){ex.classList.add('selected');selectedTone='custom';return;}const btn=document.createElement('button');btn.className='tone-btn selected';btn.dataset.tone='custom';btn.textContent='Custom';btn.onclick=()=>selectTone(btn);document.querySelector('.tone-row').appendChild(btn);selectedTone='custom';},()=>{document.getElementById('custom-name').textContent='could not decode';});});};
+  reader.onload=e=>{
+    actx.resume().then(()=>{
+      actx.decodeAudioData(e.target.result.slice(0),buf=>{
+        const id='custom-'+Date.now();
+        customTones[id]=buf;
+        const btn=document.createElement('button');
+        btn.className='tone-btn';
+        btn.dataset.tone=id;
+        btn.textContent=file.name.split('.')[0].substring(0,10);
+        btn.onclick=()=>selectTone(btn);
+        document.querySelector('.tone-row').appendChild(btn);
+        selectTone(btn);
+        document.getElementById('custom-name').textContent='added '+file.name;
+      },()=>{document.getElementById('custom-name').textContent='could not decode';});
+    });
+  };
   reader.readAsArrayBuffer(file);
 });
 
