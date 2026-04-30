@@ -189,7 +189,7 @@ function updateImgPos(){const x=document.getElementById('img-x').value,y=documen
 function clearImg(){document.getElementById('bg-img').style.display='none';document.getElementById('img-controls').style.display='none';document.getElementById('bg-name').textContent='jpg, png, gif…';document.getElementById('bg-file').value='';}
 
 const actx=new (window.AudioContext||window.webkitAudioContext)();
-let customTones={},selectedTone='bell',alertActive=false,activeNodes=[];
+let customTones={},selectedTone='bell',alertActive=false,activeNodes=[],total=0,left=0,running=false,iv=null;
 function stopAudio(){alertActive=false;activeNodes.forEach(n=>{try{n.stop();}catch(e){}});activeNodes=[];}
 const TONES={
   bell:(c,cb)=>{const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.setValueAtTime(880,t);o.frequency.exponentialRampToValueAtTime(440,t+1.2);g.gain.setValueAtTime(0.6,t);g.gain.exponentialRampToValueAtTime(0.001,t+1.5);o.start(t);o.stop(t+1.5);o.onended=cb;activeNodes.push(o);},
@@ -201,16 +201,42 @@ const TONES={
 
 function loopTone(){
   if(!alertActive)return;
-  actx.resume().then(()=>{
-    activeNodes = activeNodes.filter(n => n.playbackState !== 'finished');
-    if(selectedTone.startsWith('custom-')&&customTones[selectedTone]){
-      const s=actx.createBufferSource();s.buffer=customTones[selectedTone];s.connect(actx.destination);
-      s.onended=()=>{if(alertActive)setTimeout(loopTone,800);};
-      s.start();activeNodes.push(s);
+  
+  // Aggressively try to resume if suspended
+  if(actx.state === 'suspended'){
+    actx.resume().then(() => {
+      if(alertActive) loopTone();
+    }).catch(e => console.error("Audio resume failed:", e));
+    return;
+  }
+
+  const playTone = () => {
+    if(!alertActive) return;
+    
+    if(selectedTone.startsWith('custom-') && customTones[selectedTone]){
+      const s = actx.createBufferSource();
+      s.buffer = customTones[selectedTone];
+      s.connect(actx.destination);
+      activeNodes.push(s);
+      s.onended = () => {
+        activeNodes = activeNodes.filter(n => n !== s);
+        if(alertActive) setTimeout(loopTone, 800);
+      };
+      s.start();
     } else if(TONES[selectedTone]){
-      TONES[selectedTone](actx,()=>{if(alertActive)setTimeout(loopTone,800);});
+      TONES[selectedTone](actx, () => {
+        if(alertActive) setTimeout(loopTone, 800);
+      });
     }
-  });
+  };
+
+  try {
+    playTone();
+  } catch(e) {
+    console.error("Playback error:", e);
+    // Try to recover in 1s
+    if(alertActive) setTimeout(loopTone, 1000);
+  }
 }
 
 function selectTone(btn){
@@ -254,14 +280,16 @@ document.getElementById('overlay').addEventListener('click',function(e){if(e.tar
 function checkNotif(){if(!('Notification' in window))return;document.getElementById('notif-dot').classList.toggle('on',Notification.permission==='granted');document.getElementById('notif-msg').textContent=Notification.permission==='granted'?'notifications on':Notification.permission==='denied'?'blocked — check browser settings':'';}
 function askNotif(){Notification.requestPermission().then(()=>checkNotif());}
 
-let total=0,left=0,running=false,iv=null,alertActive=false;
+
 function pad(n){return String(n).padStart(2,'0')}
 function fmt(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?`${pad(h)}:${pad(m)}:${pad(sec)}`:`${pad(m)}:${pad(sec)}`;}
 
 document.getElementById('btn-start').onclick=()=>{
   const h=parseInt(document.getElementById('inp-h').value)||0,m=parseInt(document.getElementById('inp-m').value)||0,s=parseInt(document.getElementById('inp-s').value)||0;
   total=h*3600+m*60+s;if(total<=0)return;
-  left=total;actx.resume();
+  left=total;
+  if(iv) clearInterval(iv);
+  actx.resume().catch(e => console.warn("Initial resume failed:", e));
   const task=document.getElementById('task-input').value.trim();
   const lbl=document.getElementById('task-label');lbl.textContent=task;lbl.style.display=task?'block':'none';
   show('running');tick();running=true;iv=setInterval(()=>{if(running){left--;tick();}},1000);
