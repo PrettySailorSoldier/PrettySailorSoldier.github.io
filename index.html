@@ -239,7 +239,57 @@ function clearImg(){
 }
 
 const actx = new (window.AudioContext || window.webkitAudioContext)();
-let customTones = {}, selectedTone = 'bell', alertActive = false, activeNodes = [], total = 0, left = 0, running = false, iv = null;
+let customTones = {}, selectedTone = 'bell', alertActive = false, activeNodes = [], total = 0, left = 0, running = false, targetTime = null;
+let silentNode = null;
+
+function startKeepAlive() {
+  if (silentNode) return;
+  try {
+    const buffer = actx.createBuffer(1, 1, 44100);
+    silentNode = actx.createBufferSource();
+    silentNode.buffer = buffer;
+    silentNode.loop = true;
+    const gain = actx.createGain();
+    gain.gain.value = 0.01; 
+    silentNode.connect(gain);
+    gain.connect(actx.destination);
+    silentNode.start();
+  } catch(e) { console.error("Keep-alive failed:", e); }
+}
+
+function stopKeepAlive() {
+  if (silentNode) {
+    try { silentNode.stop(); } catch(e) {}
+    silentNode = null;
+  }
+}
+
+// Timer Worker for background execution
+const workerCode = `
+  let iv = null;
+  self.onmessage = e => {
+    if (e.data === 'start') {
+      if (iv) clearInterval(iv);
+      iv = setInterval(() => self.postMessage('tick'), 1000);
+    } else if (e.data === 'stop') {
+      clearInterval(iv);
+      iv = null;
+    }
+  };
+`;
+const worker = new Worker(URL.createObjectURL(new Blob([workerCode], {type: 'application/javascript'})));
+worker.onmessage = () => { if(running) updateTimer(); };
+
+// Pre-rendered buffers for built-in tones to allow native looping
+const renderedBuffers = {};
+async function renderTone(name, fn, duration) {
+  try {
+    const offlineCtx = new OfflineAudioContext(1, 44100 * duration, 44100);
+    fn(offlineCtx, () => {});
+    const buffer = await offlineCtx.startRendering();
+    renderedBuffers[name] = buffer;
+  } catch(e) { console.error("Render failed for " + name, e); }
+}
 
 function stopAudio(){
   alertActive = false;
@@ -307,23 +357,34 @@ function loopTone(){
     actx.resume().then(() => { if(alertActive) loopTone(); }).catch(e => console.error(e));
     return;
   }
-  const playTone = () => {
+
+  // Use native looping to bypass background throttling
+  const startLoop = (buffer) => {
     if(!alertActive) return;
+    const s = actx.createBufferSource();
+    s.buffer = buffer;
+    s.loop = true;
+    // For synthesized tones, we want a small gap. For custom tones, we loop normally.
+    if (!selectedTone.startsWith('custom-')) {
+       // Pre-rendered buffers already include the silence gap
+    }
+    s.connect(actx.destination);
+    s.start();
+    activeNodes.push(s);
+  };
+
+  try {
     if(selectedTone.startsWith('custom-') && customTones[selectedTone]){
-      const s = actx.createBufferSource();
-      s.buffer = customTones[selectedTone];
-      s.connect(actx.destination);
-      activeNodes.push(s);
-      s.onended = () => {
-        activeNodes = activeNodes.filter(n => n !== s);
-        if(alertActive) setTimeout(loopTone, 800);
-      };
-      s.start();
+      startLoop(customTones[selectedTone]);
+    } else if(renderedBuffers[selectedTone]){
+      startLoop(renderedBuffers[selectedTone]);
     } else if(TONES[selectedTone]){
+      // Fallback if not yet rendered
       TONES[selectedTone](actx, () => { if(alertActive) setTimeout(loopTone, 800); });
     }
-  };
-  try { playTone(); } catch(e) { console.error(e); if(alertActive) setTimeout(loopTone, 1000); }
+  } catch(e) {
+    console.error(e);
+  }
 }
 
 function selectTone(btn){
@@ -365,12 +426,20 @@ function show(screen){
   });
 }
 
+function updateTimer(){
+  if(!running) return;
+  const now = Date.now();
+  left = Math.max(0, Math.ceil((targetTime - now) / 1000));
+  tick();
+}
+
 function tick(){
   const d = document.getElementById('display');
   if(d) d.textContent = fmt(left);
   if(left <= 0){
-    if(iv) clearInterval(iv);
+    worker.postMessage('stop');
     running = false;
+    stopKeepAlive();
     const task = document.getElementById('task-label')?.textContent || '';
     const alertTask = document.getElementById('alert-task');
     if(alertTask){
@@ -380,7 +449,11 @@ function tick(){
     show('alerting');
     alertActive = true;
     loopTone();
-    if(Notification.permission === 'granted') new Notification("Time's up!", { body: task ? `"${task}" is done.` : 'Your timer has finished.' });
+    if(Notification.permission === 'granted') {
+       try {
+         new Notification("Time's up!", { body: task ? `"${task}" is done.` : 'Your timer has finished.', icon: '/favicon.ico' });
+       } catch(e) { console.warn("Notification failed:", e); }
+    }
   } else if(left / total <= 0.2){
     if(d) d.className = 'warning';
   } else {
@@ -399,8 +472,10 @@ document.addEventListener('DOMContentLoaded', () => {
     total = h * 3600 + m * 60 + s;
     if(total <= 0) return;
     left = total;
-    if(iv) clearInterval(iv);
-    actx.resume().catch(e => console.warn(e));
+    targetTime = Date.now() + (total * 1000);
+    actx.resume().then(() => {
+      startKeepAlive();
+    }).catch(e => console.warn(e));
     const task = get('task-input').value.trim();
     const lbl = get('task-label');
     if(lbl){
@@ -410,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
     show('running');
     tick();
     running = true;
-    iv = setInterval(() => { if(running){ left--; tick(); } }, 1000);
+    worker.postMessage('start');
   };
 
   get('btn-settings').onclick = () => get('overlay').classList.add('open');
@@ -464,14 +539,18 @@ document.addEventListener('DOMContentLoaded', () => {
     stopAudio();
     const mins = parseInt(get('snooze-min').value) || 5;
     total = mins * 60; left = total;
+    targetTime = Date.now() + (total * 1000);
+    actx.resume().then(() => startKeepAlive());
     get('display').className = '';
     show('running');
     tick();
     running = true;
-    iv = setInterval(() => { if(running){ left--; tick(); } }, 1000);
+    worker.postMessage('start');
   };
 
   get('btn-stop').onclick = () => {
+    worker.postMessage('stop');
+    stopKeepAlive();
     stopAudio();
     show('setup');
     get('display').className = '';
@@ -479,12 +558,24 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   get('btn-pause').onclick = function(){
-    if(running){ running = false; this.textContent = 'RESUME'; }
-    else { running = true; this.textContent = 'PAUSE'; }
+    if(running){ 
+      running = false; 
+      this.textContent = 'RESUME';
+      worker.postMessage('stop');
+      stopKeepAlive();
+    }
+    else { 
+      running = true; 
+      this.textContent = 'PAUSE'; 
+      targetTime = Date.now() + (left * 1000);
+      actx.resume().then(() => startKeepAlive());
+      worker.postMessage('start');
+    }
   };
 
   get('btn-cancel').onclick = () => {
-    if(iv) clearInterval(iv);
+    worker.postMessage('stop');
+    stopKeepAlive();
     running = false; left = 0;
     stopAudio();
     get('display').className = '';
@@ -497,8 +588,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if(el) el.addEventListener('input', updateGrad);
   });
 
+  // Pre-render built-in tones with gap (duration + 0.8s)
+  renderTone('bell', TONES.bell, 2.3);
+  renderTone('chime', TONES.chime, 2.1);
+  renderTone('digital', TONES.digital, 1.3);
+  renderTone('soft', TONES.soft, 2.8);
+  renderTone('urgent', TONES.urgent, 1.8);
+
   updateGrad();
   checkNotif();
   show('setup');
+  
+  // Visibility change to catch up if worker was throttled (rare but safe)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && running) updateTimer();
+  });
 });
 </script>
