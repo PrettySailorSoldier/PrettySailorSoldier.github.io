@@ -105,11 +105,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:#000}
   <div id="alerting">
     <div id="alert-label">time's up</div>
     <div id="alert-task"></div>
-    <div class="snooze-row">
-      <label>snooze</label>
-      <input type="number" id="snooze-min" value="5" min="1" max="60">
-      <label>min</label>
-    </div>
+
     <div class="bottom-row">
       <button class="btn btn-secondary" id="btn-snooze">SNOOZE</button>
       <button class="btn btn-danger" id="btn-stop">STOP</button>
@@ -537,8 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   get('btn-snooze').onclick = () => {
     stopAudio();
-    const mins = parseInt(get('snooze-min').value) || 5;
-    total = mins * 60; left = total;
+    left = total;
     targetTime = Date.now() + (total * 1000);
     actx.resume().then(() => startKeepAlive());
     get('display').className = '';
